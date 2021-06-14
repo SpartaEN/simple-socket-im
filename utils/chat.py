@@ -48,7 +48,7 @@ class Chat():
                         self.peer.send_msg(self.__aes.encrypt(payload), True)
                     else:
                         self.peer.send_msg(payload)
-                keep_alive(self.peer.socket, self.exception_callback)
+                keep_alive(self.peer, self.exception_callback)
                 self.__change_text_field_status(True)
         except HandshakeError:
             self.__incoming_notification_handler(
@@ -71,7 +71,7 @@ class Chat():
                     self.peer.send_msg(self.__aes.encrypt(payload), True)
                 else:
                     self.peer.send_msg(payload)
-            keep_alive(self.peer.socket, self.exception_callback)
+            keep_alive(self.peer, self.exception_callback)
             self.__change_text_field_status(True)
         except HandshakeError:
             self.__incoming_notification_handler(

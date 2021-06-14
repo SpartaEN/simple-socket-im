@@ -32,7 +32,7 @@ def keep_alive(conn, exception_handler):
         try:
             while True:
                 sleep(180)
-                conn.send(b'\x00')
+                conn.send_keep_alive()
         except Exception as e:
             exception_handler(e)
             exit()

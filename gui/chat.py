@@ -38,6 +38,7 @@ class ChatGUI(tkinter.Tk):
         input_get = self.input_field.get()
         self.messages.configure(state='normal')
         self.input_user.set('')
+        self.input_field.delete(0, END)
         if input_get[0:10] == '/sendfile ':
             self.chat.send_file(input_get[10:])
             return 'break'

@@ -3,6 +3,7 @@ from threading import Thread
 from socket import socket, SOCK_STREAM
 from ssl import PROTOCOL_TLS_SERVER, SSLContext
 from .helpers import get_addr
+import time
 
 
 class Server(Thread):
@@ -71,6 +72,7 @@ class ClientConnection(Thread):
         self.__msg_encrypt = False
         self.__msg_cb = lambda x, y: None
         self.__exception_cb = lambda x: None
+        self.__last_send = int(time.time())
 
     def run(self) -> None:
         try:
@@ -93,10 +95,15 @@ class ClientConnection(Thread):
         return (self.__msg_encrypt, self.__msg)
 
     def send_msg(self, msg: bytes, encrypt=False) -> None:
+        self.__last_send = int(time.time())
         if not encrypt:
             self.socket.send(b'\x01' + (len(msg)).to_bytes(4, 'little') + msg)
         else:
             self.socket.send(b'\x02' + (len(msg)).to_bytes(4, 'little') + msg)
+
+    def send_keep_alive(self):
+        if self.__last_send + 100 < int(time.time()):
+            self.socket.send(b'\x00')
 
     def add_msg_callback(self, cb):
         self.__msg_cb = cb

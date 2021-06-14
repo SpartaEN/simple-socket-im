@@ -3,6 +3,7 @@ from threading import Thread
 from socket import socket, SOCK_STREAM
 from ssl import PROTOCOL_TLS_CLIENT, SSLContext
 from .helpers import get_addr, HandshakeError
+import time
 
 '''
 NOTE: All length fields are in little endian 
@@ -23,7 +24,7 @@ General encrypted payload:
     Message:
     | 0x00 | 1 byte length | username |
     | 0x01 | 4 bytes length | msg |
-    Direct file send (Unsafe):
+    Direct file send (Unsafe, meanwhile, not available in groupchat):
     | 0x05 | 1 byte file name | 4 bytes file length | file data | 
 
 
@@ -72,6 +73,7 @@ class Client(Thread):
         self.__exception_cb = lambda x: None
         self.__challenge = None
         self.__verified = False
+        self.__last_send = int(time.time())
 
     def run(self) -> None:
         try:
@@ -103,10 +105,15 @@ class Client(Thread):
         return (self.__msg_encrypt, self.__msg)
 
     def send_msg(self, msg: bytes, encrypt=False) -> None:
+        self.__last_send = int(time.time())
         if not encrypt:
             self.socket.send(b'\x01' + (len(msg)).to_bytes(4, 'little') + msg)
         else:
             self.socket.send(b'\x02' + (len(msg)).to_bytes(4, 'little') + msg)
+
+    def send_keep_alive(self):
+        if self.__last_send + 100 < int(time.time()):
+            self.socket.send(b'\x00')
 
     def add_msg_callback(self, cb):
         self.__msg_cb = cb
