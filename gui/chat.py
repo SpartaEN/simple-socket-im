@@ -6,10 +6,13 @@ from utils.chat import Chat
 
 
 class ChatGUI(tkinter.Tk):
-    def __init__(self, addr, port, is_server=False, secret=None, username=None) -> None:
+    def __init__(self, addr, port, is_server=False, secret=None, username=None, group_chat=False, ssl_cert_location=None) -> None:
         super().__init__()
         self.username = username
-        self.wm_title('P2P Chat')
+        if group_chat:
+            self.wm_title('Simple Chat')
+        else:
+            self.wm_title('P2P Chat')
         self.messages = Text(self)
         self.messages.tag_configure('user-self', foreground='red')
         self.messages.tag_configure('user-peer', foreground='green')
@@ -24,12 +27,18 @@ class ChatGUI(tkinter.Tk):
         self.input_field.bind("<Return>", self.enter_pressed)
         self.frame.pack()
         self.input_field.configure(state='disable')
-        self.messages.insert(
-            INSERT, f'Welcome to P2P Chat. \nUse /sendfile <filename> to send files.\n', 'system')
+        self.__is_group_chat = group_chat
+        # Determine whether group chat
+        if group_chat:
+            self.messages.insert(
+                INSERT, f'Welcome to Simple Chat. \nUse /list to see people online, /end to leave chat.\n', 'system')
+        else:
+            self.messages.insert(
+                INSERT, f'Welcome to P2P Chat. \nUse /sendfile <filename> to send file, /end to leave chat.\n', 'system')
         self.messages.configure(state='disable')
         try:
-            self.chat = Chat(addr, port, is_server, secret, username, self.incoming_msg,
-                             self.incoming_notification, self.change_text_field_status, self.set_title)
+            self.chat = Chat(addr, port, is_server, secret, username, self.incoming_msg, self.incoming_notification,
+                             self.change_text_field_status, self.set_title, group_chat, ssl_cert_location)
         except Exception as e:
             showerror(title='Oops', message=e)
             self.destroy()
@@ -39,8 +48,14 @@ class ChatGUI(tkinter.Tk):
         self.messages.configure(state='normal')
         self.input_user.set('')
         self.input_field.delete(0, END)
-        if input_get[0:10] == '/sendfile ':
+        if input_get[0:10] == '/sendfile ' and not self.__is_group_chat:
             self.chat.send_file(input_get[10:])
+            return 'break'
+        if input_get[0:4] == '/end':
+            self.chat.end_chat()
+            return 'break'
+        if input_get[0:5] == '/list' and self.__is_group_chat:
+            self.chat.get_online_users()
             return 'break'
         self.chat.process_input(input_get)
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

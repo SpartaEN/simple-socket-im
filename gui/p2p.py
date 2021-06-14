@@ -4,7 +4,7 @@ from tkinter.messagebox import showerror
 from utils.helpers import gen_secret
 
 
-class Main(Tk):
+class P2P(Tk):
     def __init__(self) -> None:
         super().__init__()
         self.wm_title('P2P Chat')

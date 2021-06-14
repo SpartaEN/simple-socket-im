@@ -26,7 +26,23 @@ General encrypted payload:
     | 0x01 | 4 bytes length | msg |
     Direct file send (Unsafe, meanwhile, not available in groupchat):
     | 0x05 | 1 byte file name | 4 bytes file length | file data | 
+    End chat
+    | 0x06 |
 
+    Groupchat Auth
+    | 0x21 | 0x01 | 1 byte username length | username | 1 byte password length | password |
+    Groupchat Session
+    | 0x21 | 0x02 | 0x01 for success 0x00 for fail | Session ID/Reason |
+    Groupchat Msg out
+    | 0x22 | 1 byte session id length | session id | 4 bytes msg length | message |
+    Groupchat Msg in
+    | 0x23 | 1 byte username length | username | 4 bytes msg length | message |
+    Groupchat System notification
+    | 0x24 | 4 bytes msg length | message |
+    Groupchat get online users
+    | 0x25 | 1 byte session id length | session id |
+    End group chat
+    | 0x06 | 1 byte session id length | session id |
 
     The following section will not be implemented:
         File send request:
@@ -61,6 +77,7 @@ class Client(Thread):
         if use_ssl:
             context = SSLContext(PROTOCOL_TLS_CLIENT)
             context.load_verify_locations(ssl_cert_location)
+            context.check_hostname = False
             self.socket = context.wrap_socket(self.socket)
         self.socket.send(b'P2PCHAT-CLIENT-v0')
         if self.socket.recv(4096) != b'P2PCHAT-ACK-v0':
@@ -79,6 +96,8 @@ class Client(Thread):
         try:
             while True:
                 buf = self.socket.recv(4096)
+                if len(buf) == 0:
+                    continue
                 if buf == b'CHALLENGE-REQUIRED' and self.__verified == False:
                     if self.__challenge is None:
                         raise HandshakeError(

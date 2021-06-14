@@ -18,7 +18,7 @@ class Server(Thread):
         if use_ssl:
             context = SSLContext(PROTOCOL_TLS_SERVER)
             context.load_cert_chain(ssl_cert_location, ssl_cert_key_location)
-            self.socket = context.wrap_socket(self.socket)
+            self.socket = context.wrap_socket(self.socket, server_side=True)
         self.daemon = True
         self.conn_handler = lambda x, y: None
         self.__exception_cb = lambda x: None
@@ -63,7 +63,7 @@ class Server(Thread):
 
 
 class ClientConnection(Thread):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn, identifier=None) -> None:
         super().__init__()
         self.socket = conn
         self.daemon = True
@@ -73,11 +73,14 @@ class ClientConnection(Thread):
         self.__msg_cb = lambda x, y: None
         self.__exception_cb = lambda x: None
         self.__last_send = int(time.time())
+        self.__identifier = identifier
 
     def run(self) -> None:
         try:
             while True:
                 buf = self.socket.recv(4096)
+                if buf == '':
+                    continue
                 if buf != b'\x00':
                     self.__buffer += buf
                     msg_len = int.from_bytes(
@@ -110,3 +113,6 @@ class ClientConnection(Thread):
 
     def add_exception_cb(self, cb):
         self.__exception_cb = cb
+
+    def get_identifier(self):
+        return self.__identifier
