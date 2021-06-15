@@ -1,6 +1,6 @@
 from threading import Thread
 # AF_INET stands for IPv4, AF_INET6 stands for IPv6, SOCK_STREAM stands for TCP
-from socket import socket, SOCK_STREAM
+from socket import socket, SOCK_STREAM, SHUT_RDWR
 from ssl import PROTOCOL_TLS_CLIENT, SSLContext
 from .helpers import get_addr, HandshakeError
 import time
@@ -91,10 +91,13 @@ class Client(Thread):
         self.__challenge = None
         self.__verified = False
         self.__last_send = int(time.time())
+        self.__is_down = False
 
     def run(self) -> None:
         try:
             while True:
+                if self.__is_down:
+                    break
                 buf = self.socket.recv(4096)
                 if len(buf) == 0:
                     continue
@@ -131,8 +134,11 @@ class Client(Thread):
             self.socket.send(b'\x02' + (len(msg)).to_bytes(4, 'little') + msg)
 
     def send_keep_alive(self):
+        if self.socket.fileno() == -1:
+            return False
         if self.__last_send + 100 < int(time.time()):
             self.socket.send(b'\x00')
+        return True
 
     def add_msg_callback(self, cb):
         self.__msg_cb = cb
@@ -142,3 +148,8 @@ class Client(Thread):
 
     def set_challenge_handler(self, handler):
         self.__challenge = handler
+
+    def shutdown(self):
+        self.__is_down = True
+        self.socket.shutdown(SHUT_RDWR)
+        self.socket.close()

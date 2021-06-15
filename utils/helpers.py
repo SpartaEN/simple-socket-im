@@ -32,7 +32,8 @@ def keep_alive(conn, exception_handler):
         try:
             while True:
                 sleep(180)
-                conn.send_keep_alive()
+                if conn.send_keep_alive() == False:
+                    break
         except Exception as e:
             exception_handler(e)
             exit()

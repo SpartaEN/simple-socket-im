@@ -149,7 +149,8 @@ class Chat():
                 elif op == 6:
                     self.__incoming_notification_handler(
                         f'Peer ended the chat.')
-                    self.peer.socket.close()
+                    self.__change_text_field_status(False)
+                    self.peer.shutdown()
         # Just replay attack prevention
         except MessageExpirationError:
             pass
@@ -183,7 +184,7 @@ class Chat():
         self.__change_text_field_status(False)
         sleep(1)
         try:
-            self.peer.socket.close()
+            self.peer.shutdown()
         except:
             pass
 

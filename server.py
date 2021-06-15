@@ -65,7 +65,7 @@ def kick_user(session_id, conn, user):
     try:
         print(f'Dropping user {user.decode("utf-8")} for session {session_id}')
         session[session_id]['status'] = False
-        conn.socket.close()
+        conn.shutdown()
     except:
         pass
 
@@ -87,7 +87,7 @@ def logout(session_id):
         try:
             for conn in clients:
                 if conn.get_identifier() == session_id:
-                    conn.socket.close()
+                    conn.shutdown()
         except:
             pass
 
@@ -156,9 +156,11 @@ def on_new_connection(conn, addr):
                 f'Failed login attempt from {addr[0]}:{addr[1]}, user {username.decode("utf-8")}.')
             conn.send(
                 b'\x01\x1f\x00\x00\x00\x21\x02\x00Invalid username or password')
+            conn.shutdown()
             conn.close()
     else:
         conn.send(b'\x01\x12\x00\x00\x00\x21\x02\x00MalformedPacket')
+        conn.shutdown()
         conn.close()
 
 
