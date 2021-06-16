@@ -1,4 +1,3 @@
-from sqlite3.dbapi2 import Error
 from .socket_client import Client
 from .socket_server import Server, ClientConnection
 from .aes import AESCipher
