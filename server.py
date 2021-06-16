@@ -2,6 +2,7 @@ from utils.socket_server import Server, ClientConnection
 from utils.helpers import gen_secret
 from time import sleep
 from models.users import User
+from socket import SHUT_RDWR
 
 addr = '127.0.0.1'
 port = 5000
@@ -156,11 +157,11 @@ def on_new_connection(conn, addr):
                 f'Failed login attempt from {addr[0]}:{addr[1]}, user {username.decode("utf-8")}.')
             conn.send(
                 b'\x01\x1f\x00\x00\x00\x21\x02\x00Invalid username or password')
-            conn.shutdown()
+            conn.shutdown(SHUT_RDWR)
             conn.close()
     else:
         conn.send(b'\x01\x12\x00\x00\x00\x21\x02\x00MalformedPacket')
-        conn.shutdown()
+        conn.shutdown(SHUT_RDWR)
         conn.close()
 
 
