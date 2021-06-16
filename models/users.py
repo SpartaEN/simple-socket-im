@@ -22,13 +22,6 @@ class User():
         )
         '''
         cursor.execute(sql)
-        username = 'cisco'
-        password = bcrypt.hashpw(b'cisco', bcrypt.gensalt())
-        try:
-            cursor.execute(
-                'INSERT INTO users (username, password) VALUES (?, ?)', [username, password])
-        except sqlite3.IntegrityError:
-            pass
         conn.commit()
 
     @staticmethod
